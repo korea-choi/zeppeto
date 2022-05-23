@@ -1,7 +1,7 @@
 # zeppeto: LSM-tree dedicated to skewed distribution like zipfian and pareto.
   * zeppeto use extra-cache to in-place update and read hot-keys. It reduced compaction entries by 40%, and increased write throughput up to 63%.
   * Traditional LSM-tree KV store doesn't update kv pairs in in-place update manner. Memtable doesn't support it due to concurrent memtable writes, and also SST table out-place updates through compaction.
-  * However in skewed workload like zipfian and pretto distribution, hot kv pairs generates huge obsolete garbages that increase compaction overhead and decrease throughput.
+  * However in skewed workload like zipfian and pareto distribution, hot kv pairs generates huge obsolete garbages that increase compaction overhead and decrease throughput.
   * It is built on earlier work on [LevelDB](https://github.com/google/leveldb) by Sanjay Ghemawat (sanjay@google.com) and Jeff Dean (jeff@google.com)
 
 # Documentation
