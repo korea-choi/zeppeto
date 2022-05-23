@@ -20,6 +20,7 @@
 #include "db/write_batch_internal.h"
 #include "leveldb/db.h"
 #include "util/coding.h"
+#include "db/hot_cache.h"
 
 namespace leveldb {
 
@@ -127,7 +128,35 @@ class MemTableInserter : public WriteBatch::Handler {
     sequence_++;
   }
 };
+
+class CacheOrMemtableInserter : public WriteBatch::Handler {
+ public:
+  SequenceNumber sequence_;
+  HotCache* cache_;
+  MemTable* mem_;
+
+  void Put(const Slice& key, const Slice& value) override {
+    if(cache_->UpdateIfExist(sequence_, kTypeValue, key, value) == false){
+      mem_->Add(sequence_, kTypeValue, key, value);
+    }
+    sequence_++;
+  }
+  void Delete(const Slice& key) override {
+    if(cache_->UpdateIfExist(sequence_, kTypeDeletion, key, Slice()) == false) {
+      mem_->Add(sequence_, kTypeDeletion, key, Slice());
+    }
+    sequence_++;
+  }
+};
 }  // namespace
+
+Status WriteBatchInternal::InserIntoCacheOrMemtable(const WriteBatch* b, MemTable* memtable, HotCache* hotcache) {
+  CacheOrMemtableInserter inserter;
+  inserter.sequence_ = WriteBatchInternal::Sequence(b);
+  inserter.mem_ = memtable;
+  inserter.cache_ = hotcache;
+  return b->Iterate(&inserter);
+}
 
 Status WriteBatchInternal::InsertInto(const WriteBatch* b, MemTable* memtable) {
   MemTableInserter inserter;

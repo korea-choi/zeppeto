@@ -20,6 +20,7 @@
 
 namespace leveldb {
 
+class HotCache;
 class MemTable;
 class TableCache;
 class Version;
@@ -28,6 +29,11 @@ class VersionSet;
 
 class DBImpl : public DB {
  public:
+
+  void MoveMemTableToLv0() EXCLUSIVE_LOCKS_REQUIRED(mutex_); 
+  void CompactMemTableToDisk() EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
+  // -----------------------------------------------------------------------------------
   DBImpl(const Options& options, const std::string& dbname);
 
   DBImpl(const DBImpl&) = delete;
@@ -48,7 +54,8 @@ class DBImpl : public DB {
   bool GetProperty(const Slice& property, std::string* value) override;
   void GetApproximateSizes(const Range* range, int n, uint64_t* sizes) override;
   void CompactRange(const Slice* begin, const Slice* end) override;
-
+  void PrintIter(Slice new_key, Slice key_current, Slice key_buffer);
+  void PrintIterKey(Slice key, std::string str);
   // Extra methods (for testing) that are not in the public DB interface
 
   // Compact any files in the named level that overlap [*begin,*end]
@@ -145,6 +152,9 @@ class DBImpl : public DB {
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
   Status DoCompactionWork(CompactionState* compact)
       EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+  Status DoL0CompactionWork(CompactionState* compact)
+    EXCLUSIVE_LOCKS_REQUIRED(mutex_);
+
 
   Status OpenCompactionOutputFile(CompactionState* compact);
   Status FinishCompactionOutputFile(CompactionState* compact, Iterator* input);
@@ -175,8 +185,12 @@ class DBImpl : public DB {
   std::atomic<bool> shutting_down_;
   port::CondVar background_work_finished_signal_ GUARDED_BY(mutex_);
   MemTable* mem_;
+  HotCache* hot_cache_;
+  bool has_hot_cache_; 
+
   MemTable* imm_ GUARDED_BY(mutex_);  // Memtable being compacted
   std::atomic<bool> has_imm_;         // So bg thread can detect non-null imm_
+
   WritableFile* logfile_;
   uint64_t logfile_number_ GUARDED_BY(mutex_);
   log::Writer* log_;
@@ -185,23 +199,17 @@ class DBImpl : public DB {
   // Queue of writers.
   std::deque<Writer*> writers_ GUARDED_BY(mutex_);
   WriteBatch* tmp_batch_ GUARDED_BY(mutex_);
-
   SnapshotList snapshots_ GUARDED_BY(mutex_);
 
   // Set of table files to protect from deletion because they are
   // part of ongoing compactions.
   std::set<uint64_t> pending_outputs_ GUARDED_BY(mutex_);
-
   // Has a background compaction been scheduled or is running?
   bool background_compaction_scheduled_ GUARDED_BY(mutex_);
-
   ManualCompaction* manual_compaction_ GUARDED_BY(mutex_);
-
   VersionSet* const versions_ GUARDED_BY(mutex_);
-
   // Have we encountered a background error in paranoid mode?
   Status bg_error_ GUARDED_BY(mutex_);
-
   CompactionStats stats_[config::kNumLevels] GUARDED_BY(mutex_);
 };
 
