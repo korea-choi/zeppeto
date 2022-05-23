@@ -5,7 +5,7 @@
   * It is built on earlier work on [LevelDB](https://github.com/google/leveldb) by Sanjay Ghemawat (sanjay@google.com) and Jeff Dean (jeff@google.com)
 
 # Documentation
- * Find out more description and experiment results here!
+ * Find out more description and experiment results [here](https://github.com/korea-choi/zeppeto/blob/main/zeppeto_document.pdf)!
 
 # Limitations
   * Do not support range-query, yet.
