@@ -14,7 +14,7 @@
 # Build for POSIX
 
 ```bash
-git clone --recurse-submodules https://github.com/korea-choi/ZEPPETO.git
+git clone --recurse-submodules https://github.com/korea-choi/zeppeto.git
 cd ZEPPETO
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .
