@@ -15,6 +15,7 @@
 
 ```bash
 git clone --recurse-submodules https://github.com/korea-choi/ZEPPETO.git
+cd ZEPPETO
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .
 ```
